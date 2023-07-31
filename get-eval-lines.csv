@@ -1,0 +1,4 @@
+echo "Current lines for k = 1:"
+wc -l full-evaluation-1.log
+echo "Current lines for k = 5:"
+wc -l  full-evaluation-k-5.log

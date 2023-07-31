@@ -199,6 +199,7 @@ if __name__ == "__main__":
         epilog="Example: python bm25_experiment --mode train",
     )
     parser.add_argument("--mode", type=str, default="predict", required=True)
+    parser.add_argument("--k_precision", type=int, default=1, required=False)
     args = parser.parse_args()
 
     print("Start time: ")
@@ -258,18 +259,19 @@ if __name__ == "__main__":
                 print("Match found")
 
     elif args.mode == "evaluate":
+        k = args.k_precision
         model = build_model_from_file()
         abstracts = build_abstracts_from_file()
         claims = build_test_claims_from_file()
-        predictions = []
-        scores_per_prediction = []
         found = 0
+        current_made_predicitions = 0
+        matches = pd.DataFrame(columns=["claim", "pmid"])
         for pmid, claim in claims:
             scores = predict_abstract_scores_for_query(
                 model, query=claim, abstracts=abstracts
             )
-            expected_abstract_index = get_abstract_index(abstracts, pmid)
-            top_scoring_indexes = get_top_k_abstracts(scores, k=1)
+            expected_abstract_index = get_abstract_index(abstracts, pmid)            
+            top_scoring_indexes = get_top_k_abstracts(scores, k=k)
             actual_abstract = get_abstract_for_pmid(abstracts, pmid)            
             if expected_abstract_index in top_scoring_indexes:
                 expected_abstract_index = get_abstract_index(abstracts, pmid)
@@ -277,9 +279,19 @@ if __name__ == "__main__":
                 print(f"Index: {expected_abstract_index}")
                 print(f"Actual abstract: {' '.join(actual_abstract)}")
                 print("Match found")
+                # add to matches dataframe using iloc
+                matches.loc[len(matches)] = [claim, pmid]                
                 found += 1
+            current_made_predicitions += 1
+
+            # every 20th claim write the results to file
+            if found % 20 == 0 and found > 0:            
+                result = found / current_made_predicitions
+                print(f"Current result score: {result}")
+                print(f"Predictions made so far: {current_made_predicitions}")
 
         result = found / len(claims)
-        print(f"Result: {result}")
+        print(f"Final result score: {result}")
+        matches.to_csv(f"matches-k-{k}.csv", index=False)
     print("End time: ")
     print(datetime.datetime.now())
