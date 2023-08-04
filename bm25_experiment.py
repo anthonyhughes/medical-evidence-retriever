@@ -200,6 +200,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--mode", type=str, default="predict", required=True)
     parser.add_argument("--k_precision", type=int, default=1, required=False)
+    parser.add_argument("--with_pico", type=bool, default=False, required=False)
     args = parser.parse_args()
 
     print("Start time: ")
@@ -260,6 +261,7 @@ if __name__ == "__main__":
 
     elif args.mode == "evaluate":
         k = args.k_precision
+        with_pico = args.with_pico
         model = build_model_from_file()
         abstracts = build_abstracts_from_file()
         claims = build_test_claims_from_file()
@@ -292,6 +294,6 @@ if __name__ == "__main__":
 
         result = found / len(claims)
         print(f"Final result score: {result}")
-        matches.to_csv(f"matches-k-{k}.csv", index=False)
+        matches.to_csv(f"data/retrieval-results/matches-k-{k}.csv", index=False)
     print("End time: ")
     print(datetime.datetime.now())
